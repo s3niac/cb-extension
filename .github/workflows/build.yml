@@ -6,8 +6,6 @@ name: Build
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   build:
@@ -28,13 +26,21 @@ jobs:
     - run: npm ci
     - run: npm run build:prod
     #- run: npm run test
-    - name: Archive production artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: dist-without-markdown
-        path: |
-          dist
-          !dist/**/*.md
+    - name: update file and push to remote
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git add -f dist
+        git commit -m "add build results"
+        git push
+    #- name: Archive production artifacts
+    #  uses: actions/upload-artifact@v2
+    #  with:
+    #    name: dist-without-markdown
+    #    path: |
+    #      dist
+    #      !dist/**/*.md
     #- name: Archive code coverage results
     #  uses: actions/upload-artifact@v2
     #  with:
