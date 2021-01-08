@@ -1,6 +1,10 @@
 {
-  "name": "cb-extension",
-  "version": "0.0.0",
+  "name": "@s3niac/cb-extension",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/s3niac/cb-extension.git"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

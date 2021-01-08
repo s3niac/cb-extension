@@ -1,7 +1,11 @@
 .custom-tips {
   display: flex;
   flex-direction: column;
-  background-color: aquamarine;
+  background-color: white;
+  margin: 4px;
+  padding: 4px;
+  border-radius: 5px;
+  border: 1px solid lightgray;
 
   & form {
     & mat-form-field {
