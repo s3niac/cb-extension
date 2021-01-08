@@ -8,7 +8,6 @@ import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
   styleUrls: ['./fast-tip.component.scss']
 })
 export class FastTipComponent {
-
   fastTipGroup: FormGroup;
   tipsPatternControl: FormControl;
   patternRepeatControl: FormControl;
@@ -24,10 +23,10 @@ export class FastTipComponent {
   }
 
   get overallTips(): number {
-    return this.tipService.overallTips(this.tipsPatternControl.value, this.patternRepeatControl.value);
+    return this.tipService.tipPatternSum(this.tipsPatternControl.value, this.patternRepeatControl.value);
   }
 
   sendTips(): void {
-    this.tipService.speedTips(this.tipsPatternControl.value, this.patternRepeatControl.value);
+    this.tipService.tipPattern(this.tipsPatternControl.value, this.patternRepeatControl.value);
   }
 }

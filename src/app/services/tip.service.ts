@@ -2,6 +2,9 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {CookieService} from 'ngx-cookie-service';
 import {Observable} from 'rxjs';
+import {CurrentTokens} from '../models';
+
+const sendTokenDelay = 400;
 
 @Injectable({
   providedIn: 'root'
@@ -11,13 +14,17 @@ export class TipService {
   private tippingPath = 'tipping/send_tip';
   private currentTokenPath = 'tipping/current_tokens';
   private csrfTokenCookieKey = 'csrftoken';
-  private started = 0;
+
+  private currentToken: CurrentTokens = {
+    token_balance: 0,
+    tip_options: null,
+  };
 
   constructor(private httpClient: HttpClient,
               private cookieService: CookieService) {
   }
 
-  get room(): string {
+  private get room(): string {
     let path = window.location.pathname;
     if (path.startsWith('/')) {
       path = path.substr(1);
@@ -28,28 +35,39 @@ export class TipService {
     return path;
   }
 
-  getCurrentToken(): Observable<any> {
-    const url = `${window.location.origin}/${this.currentTokenPath}/?room=${this.room}`;
-    return this.httpClient.get(url);
+  sendTipPattern(pattern: number[], repeat: number): void {
+    const requiredToken = this.sumPatternTips(pattern, repeat);
+    this.getCurrentToken().subscribe((token: CurrentTokens) => {
+      this.currentToken = token;
+      if (requiredToken <= this.currentToken.token_balance) {
+        for (let i = 0; i < repeat; i++) {
+          this.doSendTipPattern(pattern, pattern.length * i);
+        }
+      }
+      // TODO: show not enough token error message
+    });
   }
 
-  sendSpeedTips(pattern: number[], repeat: number): void {
-    this.started = Date.now();
-    for (let i = 0; i < repeat; i++) {
-      this.sendTipPattern(pattern, pattern.length * i);
-    }
-  }
-
-  speedTips(pattern: string, repeat = 1): void {
+  tipPattern(pattern: string, repeat = 1): void {
     const tips = this.splitPattern(pattern);
-    this.sendSpeedTips(tips, repeat);
+    this.sendTipPattern(tips, repeat);
   }
 
-  overallTips(pattern: string, repeat: number = 1): number {
-    return this.splitPattern(pattern).reduce((prev: number, cur: number) => prev + cur, 0) * repeat;
+  tipPatternSum(pattern: string, repeat: number = 1): number {
+    const tips = this.splitPattern(pattern);
+    return this.sumPatternTips(tips, repeat);
   }
 
-  private createFormData(tip: number, csrfToken: string): FormData {
+  getCurrentToken(): Observable<CurrentTokens> {
+    const url = `${window.location.origin}/${this.currentTokenPath}/?room=${this.room}`;
+    return this.httpClient.get<CurrentTokens>(url);
+  }
+
+  private sumPatternTips(pattern: number[], repeat: number): number {
+    return pattern.reduce((prev: number, cur: number) => prev + cur, 0) * repeat;
+  }
+
+  private createSendTipFormData(tip: number, csrfToken: string): FormData {
     const formData = new FormData();
     formData.append('tip_amount', tip.toString(10));
     formData.append('message', '');
@@ -64,21 +82,21 @@ export class TipService {
   private sendTip(tip: number): void {
     const url = `${window.location.origin}/${this.tippingPath}/${this.room}/`;
     const csrfToken = this.cookieService.get(this.csrfTokenCookieKey);
-    const formData = this.createFormData(tip, csrfToken);
+    const formData = this.createSendTipFormData(tip, csrfToken);
     const headers = new HttpHeaders({accept: '*/*', 'x-requested-with': 'XMLHttpRequest'});
     this.httpClient.post(url, formData, {headers}).subscribe(() => {
     }, error => console.error(error));
   }
 
-  private sendSpeedTip(tip: number, counter: number): void {
-    const timeout = 200 * counter;
+  private doSendTip(tip: number, counter: number): void {
+    const timeout = sendTokenDelay * counter;
     setTimeout(() => {
       this.sendTip(tip);
     }, timeout);
   }
 
-  private sendTipPattern(pattern: number[], counter: number): void {
-    pattern.forEach((tip: number, index: number) => this.sendSpeedTip(tip, counter + index));
+  private doSendTipPattern(pattern: number[], counter: number): void {
+    pattern.forEach((tip: number, index: number) => this.doSendTip(tip, counter + index));
   }
 
   private splitPattern(pattern: string): number[] {
