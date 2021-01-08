@@ -1,0 +1,14 @@
+<div class="custom-tips">
+  <form [formGroup]="fastTipGroup">
+    <mat-form-field>
+      <mat-label>Tip Pattern</mat-label>
+      <input matInput [formControl]="tipsPatternControl">
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Pattern Repeat</mat-label>
+      <input matInput type="number" [formControl]="patternRepeatControl">
+    </mat-form-field>
+  </form>
+  <span>Overall Token: {{overallTips}}</span>
+  <button mat-button color="primary" (click)="sendTips()">Send Tips</button>
+</div>

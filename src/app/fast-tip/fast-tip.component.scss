@@ -1,0 +1,11 @@
+.custom-tips {
+  display: flex;
+  flex-direction: column;
+  background-color: aquamarine;
+
+  & form {
+    & mat-form-field {
+      width: 100%;
+    }
+  }
+}
