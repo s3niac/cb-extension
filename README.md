@@ -1,3 +1,5 @@
+![Node.js CI](https://github.com/s3niac/cb-extension/workflows/Node.js%20CI/badge.svg?branch=master)
+
 # CbExtension
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 11.0.6.
