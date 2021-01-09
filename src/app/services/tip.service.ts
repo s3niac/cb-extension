@@ -4,7 +4,7 @@ import {CookieService} from 'ngx-cookie-service';
 import {Observable} from 'rxjs';
 import {CurrentTokens} from '../models';
 
-const sendTokenDelay = 400;
+const sendTokenDelay = 200;
 
 @Injectable({
   providedIn: 'root'
