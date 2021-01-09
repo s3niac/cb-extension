@@ -13,7 +13,7 @@ divElement.setAttribute('style', 'height: 69px; width: 230px; box-sizing: border
 divElement.appendChild(document.createElement('app-root'));
 
 function addFastTipPanel(): void {
-  const videoPanel = document.querySelector('#VideoPanel');
+  const videoPanel = document.querySelector('#VideoPanel > div:nth-child(5)');
   if (videoPanel) {
     videoPanel.appendChild(divElement);
     platformBrowserDynamic().bootstrapModule(AppModule)
