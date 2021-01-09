@@ -4,7 +4,7 @@ import {CookieService} from 'ngx-cookie-service';
 import {Observable} from 'rxjs';
 import {CurrentTokens} from '../models';
 
-const sendTokenTimeout = 50;
+const sendTokenDelay = 200;
 
 @Injectable({
   providedIn: 'root'
@@ -41,7 +41,7 @@ export class TipService {
       this.currentToken = token;
       if (requiredToken <= this.currentToken.token_balance) {
         for (let i = 0; i < repeat; i++) {
-          this.doSendTipPattern(pattern);
+          this.doSendTipPattern(pattern, pattern.length * i);
         }
       }
       // TODO: show not enough token error message
@@ -79,26 +79,24 @@ export class TipService {
     return formData;
   }
 
-  private sendTip(tip: number): Observable<any> {
+  private sendTip(tip: number): void {
     const url = `${window.location.origin}/${this.tippingPath}/${this.room}/`;
     const csrfToken = this.cookieService.get(this.csrfTokenCookieKey);
     const formData = this.createSendTipFormData(tip, csrfToken);
     const headers = new HttpHeaders({accept: '*/*', 'x-requested-with': 'XMLHttpRequest'});
-    return this.httpClient.post(url, formData, {headers});
+    this.httpClient.post(url, formData, {headers}).subscribe(() => {
+    }, error => console.error(error));
   }
 
-  private doSendTip(pattern: number[], index: number): void {
-    if (pattern.length > index) {
-      this.sendTip(pattern[index]).subscribe(() => {
-        setTimeout(() => {
-          this.doSendTip(pattern, index + 1);
-        }, sendTokenTimeout);
-      });
-    }
+  private doSendTip(tip: number, counter: number): void {
+    const timeout = sendTokenDelay * counter;
+    setTimeout(() => {
+      this.sendTip(tip);
+    }, timeout);
   }
 
-  private doSendTipPattern(pattern: number[]): void {
-    this.doSendTip(pattern, 0);
+  private doSendTipPattern(pattern: number[], counter: number): void {
+    pattern.forEach((tip: number, index: number) => this.doSendTip(tip, counter + index));
   }
 
   private splitPattern(pattern: string): number[] {
