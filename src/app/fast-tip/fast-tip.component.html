@@ -8,6 +8,10 @@
       <mat-label>Pattern Repeat</mat-label>
       <input matInput type="number" [formControl]="patternRepeatControl">
     </mat-form-field>
+    <mat-form-field>
+      <mat-label>Tip Bombs</mat-label>
+      <input matInput [formControl]="tipBombsControl">
+    </mat-form-field>
   </form>
   <span>Required Tokens: {{overallTips}}</span>
   <button mat-button color="primary" (click)="sendTips()">Send Tips</button>

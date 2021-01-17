@@ -4,7 +4,7 @@ import {CookieService} from 'ngx-cookie-service';
 import {Observable} from 'rxjs';
 import {CurrentTokens} from '../models';
 
-const sendTokenDelay = 200;
+const sendTokenDelay = 250;
 
 @Injectable({
   providedIn: 'root'
@@ -35,27 +35,28 @@ export class TipService {
     return path;
   }
 
-  sendTipPattern(pattern: number[], repeat: number): void {
-    const requiredToken = this.sumPatternTips(pattern, repeat);
+  sendTipPattern(pattern: number[], repeat: number, bombs: number[]): void {
+    const requiredToken = this.calculateRequiredTokens(pattern, repeat, bombs);
     this.getCurrentToken().subscribe((token: CurrentTokens) => {
       this.currentToken = token;
       if (requiredToken <= this.currentToken.token_balance) {
-        for (let i = 0; i < repeat; i++) {
-          this.doSendTipPattern(pattern, pattern.length * i);
-        }
+        const tipArray = this.createTipArray(pattern, repeat, bombs);
+        this.doSendTipPattern(tipArray);
       }
       // TODO: show not enough token error message
     });
   }
 
-  tipPattern(pattern: string, repeat = 1): void {
+  tipPattern(pattern: string, repeat = 1, bombs: string = ''): void {
     const tips = this.splitPattern(pattern);
-    this.sendTipPattern(tips, repeat);
+    const bombTips = this.splitPattern(bombs);
+    this.sendTipPattern(tips, repeat, bombTips);
   }
 
-  tipPatternSum(pattern: string, repeat: number = 1): number {
+  tipPatternSum(pattern: string, repeat: number = 1, bombs: string = ''): number {
     const tips = this.splitPattern(pattern);
-    return this.sumPatternTips(tips, repeat);
+    const bombTips = this.splitPattern(bombs);
+    return this.calculateRequiredTokens(tips, repeat, bombTips);
   }
 
   getCurrentToken(): Observable<CurrentTokens> {
@@ -63,8 +64,12 @@ export class TipService {
     return this.httpClient.get<CurrentTokens>(url);
   }
 
-  private sumPatternTips(pattern: number[], repeat: number): number {
-    return pattern.reduce((prev: number, cur: number) => prev + cur, 0) * repeat;
+  private calculateRequiredTokens(tips: number[], repeat: number, bombTips: number[]): number {
+    return this.sumTips(tips, repeat) + this.sumTips(bombTips, 1);
+  }
+
+  private sumTips(tips: number[], repeat: number): number {
+    return tips.reduce((prev: number, cur: number) => prev + cur, 0) * repeat;
   }
 
   private createSendTipFormData(tip: number, csrfToken: string): FormData {
@@ -90,18 +95,31 @@ export class TipService {
 
   private doSendTip(tip: number, counter: number): void {
     const timeout = sendTokenDelay * counter;
-    setTimeout(() => {
-      this.sendTip(tip);
-    }, timeout);
+    setTimeout(() => this.sendTip(tip), timeout);
   }
 
-  private doSendTipPattern(pattern: number[], counter: number): void {
-    pattern.forEach((tip: number, index: number) => this.doSendTip(tip, counter + index));
+  private doSendTipPattern(pattern: number[]): void {
+    pattern.forEach((tip: number, index: number) => this.doSendTip(tip, index));
   }
 
   private splitPattern(pattern: string): number[] {
     return pattern.split(' ')
       .filter((tip: string) => !!tip && tip.length > 0)
       .map((tip: string) => +tip);
+  }
+
+  private createTipArray(pattern: number[], repeat: number, bombs: number[]): number[] {
+    const tips: number[] = [];
+    for (let i = 0; i < repeat; i++) {
+      tips.push(...pattern);
+    }
+    const tipsCount = tips.length;
+    const tenPercentTipsCount = Math.floor(tipsCount / 10);
+    const allowedBombIndexes = tipsCount - tenPercentTipsCount;
+    bombs.forEach((value: number) => {
+      const index = Math.floor( tenPercentTipsCount + (Math.random() * allowedBombIndexes));
+      tips.splice(index, 0, value);
+    });
+    return tips;
   }
 }
